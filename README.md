@@ -24,9 +24,9 @@ Currently there is just a single example, built on the 8 schools dataset. Spark 
 
 From the `stark/example` directory, try:
 
-$$
+```
 spark-submit stark_ex.py
-$$
+```
 
 (I've only tried this with Spark 1.6.2)
 
