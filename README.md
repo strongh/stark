@@ -42,3 +42,4 @@ Related projects
 =======
 
 + [parallelMCMCcombine](https://cran.r-project.org/web/packages/parallelMCMCcombine/index.html)
++ [Blog post about PyMC on Spark](http://blog.cloudera.com/blog/2014/08/bayesian-machine-learning-on-apache-spark/)
