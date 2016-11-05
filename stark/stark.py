@@ -29,26 +29,17 @@ def consensus_avg(J):
         if np.isnan(f1).any():
             return f2
 
-        m = f1.shape[0] # number of parameters
-        # I ignore the prior covariance
-        sigma_j = [0]*m
-        sigma_prior = np.identity(m)
-        fs = [f1, f2]
-        sigma_precision = np.linalg.inv(sigma_prior)
-        prec_j = fs
-
+        # following Scott '16.
+        # weights are optimal for Gaussian
         for j in [0, 1]:
             sigma_j[j] = np.cov(fs[j])
-            prec_j[j] = np.linalg.inv(sigma_j[j] + sigma_precision)
-        ## maybe could use matrix inversion lemma to do this correctly in pairwise fashion
-        sigma = np.linalg.inv(sigma_precision + prec_j[0] + prec_j[1])
 
-        w_j = [0]*m
-        for j in [0, 1]:
-            w_j[j] = np.dot(sigma, sigma_precision/J + prec_j[j])
-
-        return np.dot(w_j[0], f1) + np.dot(w_j[1], f2)
+        return [
+            sigma_j[0] + sigma_j[1],
+            np.dot(sigma_j[0], f1) + np.dot(sigm_j[1], f2)
+        ]
     return c
+
 
 def concatenate_samples(a, b):
     return np.vstack((a, b))
@@ -70,7 +61,11 @@ class Stark:
 
     def concensusWeight(self):
         subposteriors = self.rdd.mapPartitions(mcmc(self.prepare_data_callback))
-        consensusSamples = subposteriors.reduce(consensus_avg(self.n_partitions))
+        concensusProducts = subposteriors.reduce(consensus_avg(self.n_partitions))
+        consensusSamples = np.dot(
+            np.linalg.inv(concensusProducts[0]), # inverse of sum of the W_s
+            concensusProducts[1] # sum of (W_s theta_s)
+        )
         return consensusSamples
 
     def distribute(self, n=2):
