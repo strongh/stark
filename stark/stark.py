@@ -14,14 +14,15 @@ def mcmc(callback):
         spst = SparkFiles.get(PICKLE_FILENAME)
         sm = pickle.load(open(spst, "rb"))
         fit = sm.sampling(data=data,
-                          iter=2000, chains=4)
+                          iter=2000, chains=1)
         h = [np.array(samples[1]) for samples in fit.extract().items()]
         for prm in h:
             if len(prm.shape)==1:
                 prm.shape = (prm.shape[0], 1)
         # the singleton array is b/c we want to keep the matrix
         # together, not broken apart into rows
-        return [np.hstack(h)]
+        # Transpose into variables-by-samples
+        return [np.transpose(np.hstack(h))]
     return w
 
 def consensus_avg(J):
@@ -29,14 +30,16 @@ def consensus_avg(J):
         if np.isnan(f1).any():
             return f2
 
+        # initialize fs
+        fs = [f1, f2]
+
         # following Scott '16.
         # weights are optimal for Gaussian
-        for j in [0, 1]:
-            sigma_j[j] = np.cov(fs[j])
+        sigma_j = [np.linalg.inv(np.cov(fs[j])) for j in [0, 1]]
 
         return [
             sigma_j[0] + sigma_j[1],
-            np.dot(sigma_j[0], f1) + np.dot(sigm_j[1], f2)
+            np.dot(sigma_j[0], f1) + np.dot(sigma_j[1], f2)
         ]
     return c
 
